@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Import Beehiiv Export CSV</title>
+    <link rel="stylesheet" href="./import-csv.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Import Beehiiv Export CSV to Algolia</h1>
+
+      <div class="form-section">
+        <p>
+          The export from Beehiiv doesn't include author names. Write here what you'd like to be the default author name for the articles you're importing. For example, you could put <em>"The crew at {{newsletter-name}}"</em>.
+        </p>
+
+        <label for="default-author">
+          <span class="label-text">Default Author Name</span>
+          <input id="default-author" type="text" placeholder="e.g. The crew at Tech Weekly" />
+        </label>
+
+        <div class="file-upload">
+          <label for="import" class="file-label">Upload Beehiiv CSV</label>
+          <input id="import" type="file" />
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/papaparse@5.5.3/papaparse.min.js"></script>
+    <script>
+      const fileInput = document.getElementById("import");
+      const container = document.querySelector("body > div");
+
+      fileInput.addEventListener("change", () => {
+        const defaultAuthor = document.getElementById("default-author").value;
+        Papa.parse(fileInput.files[0], {
+          header: true,
+          complete: results => {
+            const payload = results.data
+              .filter(record => !!record.id)
+              .map(record => ({
+                "audience": record.web_audiences.replace(/all|subscribers/gi, "").split(",").map(x => x.trim()),
+                "authors": [ defaultAuthor ],
+                "content_tags": record.content_tags?.split(";")?.map(x => x.trim()).filter(x => !!x),
+                "created": (new Date(record.created_at)).valueOf() / 1000,
+                "id": record.id,
+                "preview_text": record.email_preview_text,
+                "web_url": record.url,
+                "status": record.status,
+                "subject_line": record.email_subject_line,
+                "subtitle": record.web_subtitle,
+                "thumbnail_url": record.thumbnail_url,
+                "title": record.web_title
+              }));
+            const payloadSectionSize = 5;
+            const payloadSectionCount = Math.ceil(payload.length / payloadSectionSize);
+            let doneCount = 0;
+            for (let i = 0; i < payloadSectionCount; i++) {
+              setTimeout(() => {
+                fetch("/post", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    data: payload.slice(i * payloadSectionSize, (i + 1) * payloadSectionSize)
+                  })
+                }).then(() => {
+                  doneCount++;
+                  container.innerText = doneCount != payloadSectionCount ? `Batch ${doneCount} of ${payloadSectionCount} saved.` : "All done!";
+                })
+              }, i * 1000); // send a batch of records every second
+            }
+            
+            fileInput.value = "";
+            container.innerText = "Data import beginning...";
+          }
+        });
+      }, false);
+    </script>
+  </body>
+</html>

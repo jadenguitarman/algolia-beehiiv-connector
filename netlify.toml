@@ -1,0 +1,15 @@
+[functions]
+  directory = "api"
+
+[build]
+  publish = "/publish"
+
+[template.environment]
+  ALGOLIA_APPLICATION_ID = "Application ID from the 'API Keys' page."
+  ALGOLIA_INDEX_NAME = "The name of the index you created."
+  ALGOLIA_SEARCH_API_KEY = "Search API Key from the 'API Keys' page on the Algolia site."
+  ALGOLIA_WRITE_API_KEY = "Write API Key from the 'API Keys' page on the Algolia site."
+  BLOG_POST_URL = "The domain of your Beehiiv website with the protocol, à la `https://gethalfbaked.com`."
+  SHOW_AUTHORS = "Optional - default is false. Type true here to display author names in the search UI."
+  DEFAULT_IMAGE_URL = "Optional - default is from placeholder.co. The default image that will display alongside search results that don't have a header image."
+  AUTO_UPDATE_ALGOLIA_SETTINGS = "Optional - default is true. Type false here if you don't want this connector to manage the settings of your Algolia index."
