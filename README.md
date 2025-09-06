@@ -22,14 +22,25 @@ Each section of a newsletter is indexed as one record:
 
 ```json
 {
-  "objectID": "article123::section2",
-  "article_id": "article123",
-  "issue_date": "2024-08-15",
-  "title": "Web Components are back",
-  "section_title": "A new hope for components",
-  "section_text": "Web Components solve...",
-  "position": 2,
-  "url": "https://newsletterdomain.com/p/web-components"
+  {
+  "heading": "1. Problem/Opportunity❓",
+  "contents": "BUSINESS IDEA | STARTUP\nLoom for Pitch Decks \n \n [REST OF SECTION, CUT FOR BREVITY]",
+  "articleID": "877f2e90-f7e4-4591-baed-7cea617823c1",
+  "created": 1745369760,
+  "title": "Business Ideas #340: Loom for X, Natural Light...",
+  "preview_text": "Plus 🐕 💡 ⌨️",
+  "slug": "business-ideas-340-loom-for-x",
+  "thumbnail_url": "",
+  "subtitle": "Plus How a Pub Conversation Birthed a $250m Business",
+  "status": "confirmed",
+  "content_tags": [],
+  "audience": [
+    "free"
+  ],
+  "authors": [
+    "The Half Baked crew"
+  ],
+  "objectID": "fff46e60-1466-4fb5-a97c-4b8a08eaf6b5"
 }
 ```
 
@@ -45,11 +56,14 @@ Click to deploy:
 
 During deployment, Netlify will ask for:
 
-- `ALGOLIA_APP_ID`  
-- `ALGOLIA_WRITE_KEY`  
-- `ALGOLIA_SEARCH_KEY`  
-- `ALGOLIA_INDEX_NAME`  
-- `BEEHIIV_DOMAIN`  
+- `ALGOLIA_APPLICATION_ID` - Application ID from the 'API Keys' page.
+- `ALGOLIA_INDEX_NAME` - The name of the index you created.
+- `ALGOLIA_SEARCH_API_KEY` - Search API Key from the 'API Keys' page on the Algolia site.
+- `ALGOLIA_WRITE_API_KEY` - Write API Key from the 'API Keys' page on the Algolia site.
+- `BLOG_POST_URL` - The domain of your Beehiiv website with the protocol, à la `https://gethalfbaked.com`.
+- `SHOW_AUTHORS` - Optional - default is false. Type true here to display author names in the search UI.
+- `DEFAULT_IMAGE_URL` - Optional - default is from placeholder.co. The default image that will display alongside search results that don't have a header image.
+- `AUTO_UPDATE_ALGOLIA_SETTINGS` - Optional - default is true. Type false here if you don't want this connector to manage the settings of your Algolia index.
 
 ---
 
@@ -77,10 +91,8 @@ This parses, transforms, and pushes data to Algolia in batches.
 
 The connector manages index settings automatically (`/settings`). It configures:
 
-- `searchableAttributes`: title, section text  
-- `attributeForDistinct`: article_id  
-- `customRanking`: by issue_date desc  
-- `attributesForFaceting`: tags, authors, date  
+- `attributeForDistinct`: article_id    
+- `attributesForFaceting`: article_id
 
 You can override manually in the Algolia dashboard if needed.
 
@@ -98,20 +110,6 @@ Paste this snippet into your Beehiiv site:
   style="border:none">
 </iframe>
 ```
-
----
-
-## Maintenance
-
-- Re-import: re-upload CSV to /import-csv if data gets out of sync.
-
-- Deletions: Beehiiv doesn’t notify on deletes; re-import to remove missing issues.
-
-- Security: add request validation to /post to ensure only Beehiiv can call it.
-
-- Logs: check Netlify function logs for errors.
-
-- Schema changes: bump a version field in records and re-import to rebuild index.
 
 ---
 
