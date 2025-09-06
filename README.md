@@ -1,30 +1,124 @@
-# Algolia - Beehiiv connector
+# Algolia—Beehiiv Connector
 
-Below are the steps to use this connector. You can skip any steps that you've already done.
+Search your Beehiiv newsletter archive like a knowledge base.
 
-1. Create your account at algolia.com and follow the onboarding steps to create an application and index. Save the index name.
+This project indexes Beehiiv posts into Algolia at the **section level**, then groups them so each issue appears as a single result. It’s designed to run on **Netlify Functions** with a deploy button for easy setup.
 
-1. Click the button in the bottom left corner of the Algolia dashboard that goes to the Settings page, then go to the API Keys tab. Save the Application ID, the Search API Key, and the Write API Key.
+---
 
-1. Click the button below to deploy this app to Netlify. You might have to create an account if you don't have one already. It will ask you to connect to your GitHub account, then input the Application ID, the two API keys, the index name, and the domain of your Beehiiv newsletter website, along with some optional configuration values you don't need to touch if you don't want to.
+## Features
 
-    [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/jadenguitarman/algolia-beehiiv-connector)
+- **Section-level indexing**: search results drop readers directly into the right part of a newsletter.
+- **Grouped results**: Algolia’s deduplication collapses multiple sections into one card per issue.
+- **Bulk import**: upload your Beehiiv CSV export to backfill past issues.
+- **Webhooks**: new posts and updates sync automatically.
+- **Embed-ready UI**: hosted search page at `/search` can be embedded into Beehiiv with an `<iframe>`.
 
-1. Copy the random name Netlify gives your project. It should look something like `spontaneous-taiyaki-1db786`. It might take a few moments, but the app will soon be live at `<project-name>.netlify.app`.
+---
 
-1. Log into your Beehiiv dashboard. Click on the Settings page in the bottom left corner. Go to the Webhooks tab and create two new webhooks, one for new posts and one for post updates. Set the URL destination of both webhooks to `<project-name>.netlify.app/post`.
+## Data model
 
-1. Under the Export Data tab > Export Posts, click the button to generate an export. It'll show up after a little while in the Historical Exports window below. Once it does, download it.
+Each section of a newsletter is indexed as one record:
 
-    ![Historical Exports](images/historical-exports.png)
+```json
+{
+  "objectID": "article123::section2",
+  "article_id": "article123",
+  "issue_date": "2024-08-15",
+  "title": "Web Components are back",
+  "section_title": "A new hope for components",
+  "section_text": "Web Components solve...",
+  "position": 2,
+  "url": "https://newsletterdomain.com/p/web-components"
+}
+```
 
-1. In a new tab, go to `<project-name>.netlify.app/import-csv`. Upload your Beehiiv post CSV export, and the script will automatically fill the Algolia index with your posts. Unless you specifically asked it not to during the step where you created environment variables, this connector will manage your Algolia settings for you. It'll automatically separate each article section into its own record, but bunch together all the records that were from the same aritcle as one search result using [Deduplication](https://www.algolia.com/doc/guides/managing-results/refine-results/grouping/). Your users will get a cleaner experience of one newsletter issue to one search result, but you'll have the precision and accuracy of a subheading-level search.
+---
 
-1. In the Beehiiv website builder, find the spot where you'd like to place your search integration and add a Custom HTML widget there. Insert this code, swapping in the project name from earlier:
+## Getting started
 
-    ```html
-    <iframe 
-        src="<project-name>.netlify.app/search"
-        style="width: 100%; height: 100%; border: 0; outline: 0; margin: 0; padding: 0; flex: 1;"
-    ></iframe>
-    ```
+### 1. Deploy to Netlify
+
+Click to deploy:
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/jadenguitarman/algolia-beehiiv-connector)
+
+During deployment, Netlify will ask for:
+
+- `ALGOLIA_APP_ID`  
+- `ALGOLIA_WRITE_KEY`  
+- `ALGOLIA_SEARCH_KEY`  
+- `ALGOLIA_INDEX_NAME`  
+- `BEEHIIV_DOMAIN`  
+
+---
+
+### 2. Configure Beehiiv webhooks
+
+In the Beehiiv dashboard:
+
+- Create a **New Post** webhook pointing to  
+  `https://<project>.netlify.app/post`  
+
+- Create a **Post Updated** webhook pointing to the same URL.
+
+---
+
+### 3. Import past issues
+
+Export your Beehiiv posts as CSV, then upload at `https://<project>.netlify.app/import-csv`.
+
+
+This parses, transforms, and pushes data to Algolia in batches.
+
+---
+
+### 4. Verify settings
+
+The connector manages index settings automatically (`/settings`). It configures:
+
+- `searchableAttributes`: title, section text  
+- `attributeForDistinct`: article_id  
+- `customRanking`: by issue_date desc  
+- `attributesForFaceting`: tags, authors, date  
+
+You can override manually in the Algolia dashboard if needed.
+
+---
+
+### 5. Embed search in Beehiiv
+
+Paste this snippet into your Beehiiv site:
+
+```html
+<iframe
+  src="https://<project>.netlify.app/search"
+  width="100%"
+  height="800"
+  style="border:none">
+</iframe>
+```
+
+---
+
+## Maintenance
+
+- Re-import: re-upload CSV to /import-csv if data gets out of sync.
+
+- Deletions: Beehiiv doesn’t notify on deletes; re-import to remove missing issues.
+
+- Security: add request validation to /post to ensure only Beehiiv can call it.
+
+- Logs: check Netlify function logs for errors.
+
+- Schema changes: bump a version field in records and re-import to rebuild index.
+
+---
+
+## Related links
+
+- [Blog post: How I built the Algolia—Beehiiv connector](https://www.algolia.com/blog/product/how-i-built-the-algolia-beehiiv-connector)
+
+- [Algolia deduplication guide](https://www.algolia.com/doc/guides/algolia-recommend/how-to/deduplication/)
+
+- [Beehiiv webhook docs](https://developers.beehiiv.com/webhooks/post/sent)
